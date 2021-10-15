@@ -1,0 +1,78 @@
+﻿@page "/tempo"
+
+@inject IHttpClientFactory _factoriaCliente
+
+<h3>Prevision Do Tempo</h3>
+
+@if (string.IsNullOrWhiteSpace(infoError) == false)
+{
+    <div class="h2">@infoError</div>
+}
+else if (prevision is null)
+{
+    <div class="h4">Cargando datos...</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Lugar</th>
+                <th>Grafico</th>
+                <th>Condicion</th>
+                <th>Temperatura</th>
+                <th>Minima</th>
+                <th>Maxima</th>
+                <th>Vento</th>
+                <th>Humidade</th>
+                <th>Altitude</th>
+                <th>Saida do sol</th>
+                <th>Posta do sol</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                @foreach (var tempo in prevision.weather)
+                {
+                    <td>@prevision.name</td>
+                    <td><img src=@($"http://openweathermap.com/img/wn/{prevision.weather[0].icon}@2x.png") /></td>
+                    <td>@tempo.description</td>
+                    <td>@prevision.main.temp ºC</td>
+                    <td>@prevision.main.temp_min ºC</td>
+                    <td>@prevision.main.temp_max ºC</td>
+                    <td>@prevision.wind.speed m/s</td>
+                    <td>@prevision.main.humidity</td>
+                    <td>@prevision.main.sea_level</td>
+                    <td>@prevision.sys.sunrise</td>
+                    <td>@prevision.sys.sunset</td>
+                }
+            </tr>
+        </tbody>
+    </table>
+}
+
+@code {
+
+    PrevisionModel prevision;
+    string infoError;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var peticion = new HttpRequestMessage(HttpMethod.Get,
+        "http://api.openweathermap.org/data/2.5/weather?q=laxedo&appid=dee22ddba0313fdca3295fb1a22331a8&lang=es&units=metric");
+
+        var cliente = _factoriaCliente.CreateClient();
+
+        HttpResponseMessage resposta = await cliente.SendAsync(peticion);
+
+        if (resposta.IsSuccessStatusCode)
+        {
+            prevision = await resposta.Content.ReadFromJsonAsync<PrevisionModel>();
+            infoError = null;
+        }
+        else
+        {
+            infoError = $"Houbo un erro obtendo a prevision { resposta.ReasonPhrase}";
+        }
+    }
+}
